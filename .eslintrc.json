@@ -1,0 +1,51 @@
+{
+  "extends": ["airbnb", "prettier", "plugin:node/recommended"],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": "error",
+    "spaced-comment": "off",
+    "no-console": "warn",
+    "consistent-return": "off",
+    "func-names": "off",
+    "object-shorthand": "off",
+    "no-process-exit": "off",
+    "no-param-reassign": "off",
+    "no-return-await": "off",
+    "no-underscore-dangle": "off",
+    "class-methods-use-this": "off",
+    "prefer-destructuring": ["error", { "object": true, "array": false }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "req|res|next|val" }],
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "js": "always",
+        "json": "always",
+        "jsx": "never",
+        "ts": "never",
+        "tsx": "never",
+        "svg": "always",
+        "ignore": ["\\.js$", "\\.jsx$", "\\.ts$", "\\.tsx$", "\\.json$"]
+      }
+    ]
+  }
+}
+
+
+//"devDependencies": {
+//"@eslint/eslintrc": "^3.0.2",
+//"@eslint/js": "^9.1.1",
+//"cross-env": "^7.0.3",
+//"eslint": "^8.57.0",
+//"eslint-config-airbnb": "^19.0.4",
+//"eslint-config-airbnb-base": "^15.0.0",
+//"eslint-config-prettier": "^9.1.0",
+//"eslint-plugin-import": "^2.29.1",
+//"eslint-plugin-jsx-a11y": "^6.8.0",
+//"eslint-plugin-node": "^11.1.0",
+//"eslint-plugin-prettier": "^5.1.3",
+//"eslint-plugin-react": "^7.34.1",
+//"globals": "^15.0.0",
+//"nodemon": "^3.1.0",
+//"prettier": "^3.2.5"
+//}

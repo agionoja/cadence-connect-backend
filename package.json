@@ -1,0 +1,33 @@
+{
+  "name": "cadence-connect-backend",
+  "version": "1.0.0",
+  "description": "A Restful API provider for cadence connect",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev:express": "nodemon server.js",
+    "start:express": "cross-env NODE_ENV=production node server.js"
+  },
+  "author": "Divine Paul",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "chalk": "^5.3.0",
+    "clone-deep": "^4.0.1",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.0",
+    "morgan": "^1.10.0",
+    "portfinder": "^1.0.32",
+    "slugify": "^1.6.6",
+    "socket.io": "^4.7.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.2"
+  }
+}

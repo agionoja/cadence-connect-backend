@@ -1,10 +1,10 @@
 import AppError from "../utils/appError.js";
 import catchAsync from "../utils/catchAsync.js";
-import sanitizeBody from "../utils/sanitizeBody.js";
+import filterObject from "../utils/filterObject.js";
 import User from "../models/userModel.js";
 
 export const createUser = catchAsync(async (req, res, next) => {
-  const body = sanitizeBody(
+  const body = filterObject(
     req.body,
     "name",
     "email",
@@ -47,10 +47,15 @@ export const deleteUser = catchAsync(async (req, res, next) => {
   res.status(204).send();
 });
 
+export const suspendUser = catchAsync(async (req, res, next) => {});
+export const terminateUser = catchAsync(async (req, res, next) => {});
+
 export default {
   createUser,
   getUser,
   getAllUsers,
   updateUser,
   deleteUser,
+  suspendUser,
+  terminateUser,
 };

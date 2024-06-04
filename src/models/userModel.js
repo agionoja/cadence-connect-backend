@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { promisify } from "node:util";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import pointSchema from "./pointSchema.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -16,20 +17,23 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Email is required"],
       trim: true,
+      unique: true,
       validate: {
         validator: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
         message: "Invalid email address",
       },
     },
-    // role: {
-    //   type: String,
-    //   enum: {
-    //     value: ["user", "eventPlanner", "admin", "superAdin"],
-    //     message:
-    //       "Invalid role. Choose from: user, eventPlanner, admin or superAdmin",
-    //   },
-    //   default: "user",
-    // },
+    role: {
+      type: String,
+      enum: {
+        values: ["user", "eventPlanner", "admin", "superAdmin"],
+        message:
+          "Invalid role. Choose from: user, eventPlanner, admin or superAdmin",
+      },
+      default: "user",
+    },
+    location: pointSchema,
+    profileImage: String,
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -38,7 +42,7 @@ const userSchema = new mongoose.Schema(
       validate: {
         validator: (value) =>
           /^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,50}$/.test(value),
-        message: (value) => {
+        message: ({ value }) => {
           if (value.length < 8) {
             return "Password must be at least 8 characters";
           }
@@ -66,15 +70,27 @@ const userSchema = new mongoose.Schema(
       },
       select: false,
     },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    isTerminated: {
+      type: Boolean,
+      default: false,
+    },
     passwordResetToken: String,
     passwordResetTokenExpires: Date,
-    passwordChangedAt: Date,
+    passwordChangedAt: {
+      type: Date,
+      select: false,
+    },
+    suspensionDuration: Date,
   },
   { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
+  if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
     this.passwordConfirm = undefined;
   }
@@ -104,14 +120,14 @@ userSchema.methods.passwordChangedAfterJwt = function (iat) {
 };
 
 userSchema.methods.generatePasswordResetToken = async function () {
-  const token = await promisify(crypto.randomBytes)(32);
-  crypto.randomBytes(33);
-  this.passwordREsetToken = crypto
+  const token = (await promisify(crypto.randomBytes)(32)).toString("hex");
+  this.passwordResetTokenExpires = Date.now() + 1000 * 60 * 60;
+  this.passwordResetToken = crypto
     .createHash("sha256")
     .update(token)
     .digest("hex");
-  this.passworResetTokenExpires = Date.now() + 1000 * 60 * 60;
-  return token.toString("hex");
+  this.save({ validateBeforeSave: false });
+  return token;
 };
 
 const User = mongoose.model("User", userSchema);

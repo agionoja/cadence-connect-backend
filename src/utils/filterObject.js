@@ -1,4 +1,4 @@
-const sanitizeBody = (object, ...keys) =>
+const filterObject = (object, ...keys) =>
   Object.keys(object).reduce((sanitizedObject, key) => {
     if (keys.includes(key)) {
       sanitizedObject[key] = object[key];
@@ -6,4 +6,4 @@ const sanitizeBody = (object, ...keys) =>
     return sanitizedObject;
   }, {});
 
-export default sanitizeBody;
+export default filterObject;

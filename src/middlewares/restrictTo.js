@@ -6,3 +6,5 @@ const restrictTo =
     if (roles.includes(req.user.role)) return next();
     return new AppError("You are not authorized to access this resource.", 401);
   };
+
+export default restrictTo;

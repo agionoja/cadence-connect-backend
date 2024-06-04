@@ -5,9 +5,9 @@ import bodyParser from "body-parser";
 
 // Project imports
 import AppError from "./utils/appError.js";
-import globalErrorHandler from "./middlewares/globalErrorHandler.js";
+import globalError from "./middlewares/globalError.js";
 import userRoutes from "./routes/userRoutes.js";
-import eventPlannerRoutes from "./routes/eventPlannerRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
 import { apiBaseUrlV1 } from "./utils/apiBaseUrl.js";
 
 const app = express();
@@ -16,13 +16,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes handler
-app.use(`${apiBaseUrlV1}/users`, userRoutes);
-app.use(`${apiBaseUrlV1}/eventPlanners`, eventPlannerRoutes);
+app.use(`/cadence-connect/api/v1/users`, userRoutes);
+app.use(`/cadence-connect/api/v1/events`, eventRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`${req.originalUrl} is not on this server`, 404));
 });
 
-app.use(globalErrorHandler);
+app.use(globalError);
 
 export default app;

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev:express": "nodemon server.js",
-    "start:express": "cross-env NODE_ENV=production node server.js"
+    "start:express": "cross-env NODE_ENV=production node server.js",
+    "seedAmin": "node seedAmin.js"
   },
   "author": "Divine Paul",
   "license": "ISC",

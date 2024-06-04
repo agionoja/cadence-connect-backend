@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 
-const socketIo = async (httpServer) => {
+const socketIo = (httpServer) => {
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {

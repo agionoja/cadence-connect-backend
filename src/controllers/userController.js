@@ -3,6 +3,7 @@ import AppQueries from "../utils/appQueries.js";
 import catchAsync from "../utils/catchAsync.js";
 import filterObject from "../utils/filterObject.js";
 import User from "../models/userModel.js";
+import validateEventPlannerRequest from "../utils/validateEventPlannerRequest.js";
 
 export const createUser = catchAsync(async (req, res, next) => {
   const body = filterObject(
@@ -64,23 +65,10 @@ export const deleteUser = catchAsync(async (req, res, next) => {
 
 export const applyForEventPlanner = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
-
-  if (!user) {
-    return next(new AppError("User not found", 404));
-  }
-
-  if (user.eventPlannerApplicationStatus === "pending") {
-    return next(new AppError("User application is pending", 409));
-  }
-
-  if (user.eventPlannerApplicationStatus === "approved") {
-    return next(new AppError("User is already an event planner", 409));
-  }
-
+  validateEventPlannerRequest(user, "apply", next);
   user.applyForEventPlanner = true;
   user.eventPlannerApplicationStatus = "pending";
   await user.save({ validateBeforeSave: false });
-
   res.status(200).json({
     statusText: "success",
     data: { user },
@@ -89,23 +77,10 @@ export const applyForEventPlanner = catchAsync(async (req, res, next) => {
 
 export const approveEventPlanner = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
-
-  if (!user) {
-    return next(new AppError("User not found", 404));
-  }
-
-  if (user.eventPlannerApplicationStatus === "rejected") {
-    return next(new AppError("User has been rejected. Apply again", 403));
-  }
-
-  if (user.eventPlannerApplicationStatus === "approved") {
-    return next(new AppError("User is already an event planner", 409));
-  }
-
+  validateEventPlannerRequest(user, "approve", next);
   user.eventPlannerApplicationStatus = "approved";
   user.role = "eventPlanner";
   await user.save({ validateBeforeSave: false });
-
   res.status(200).json({
     statusText: "success",
     data: { user },
@@ -114,18 +89,9 @@ export const approveEventPlanner = catchAsync(async (req, res, next) => {
 
 export const rejectEventPlanner = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
-
-  if (!user) {
-    return next(new AppError("User not found", 404));
-  }
-
-  if (user.eventPlannerApplicationStatus === "approved") {
-    return next(new AppError("User is already an event planner", 409));
-  }
-
+  validateEventPlannerRequest(user, "reject", next);
   user.eventPlannerApplicationStatus = "rejected";
   await user.save({ validateBeforeSave: false });
-
   res.status(200).json({
     statusText: "success",
     data: { user },

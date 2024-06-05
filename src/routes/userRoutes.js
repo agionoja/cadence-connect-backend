@@ -3,6 +3,7 @@ import restrictTo from "../middlewares/restrictTo.js";
 import userController from "../controllers/userController.js";
 import authController from "../controllers/authController.js";
 import protect from "../middlewares/protect.js";
+import preventAdminRequest from "../middlewares/preventAdminRequest.js";
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.patch("/reset-password/:token", authController.resetPassword);
 router.patch(
   "/:id/event-planner/apply",
   protect,
+  preventAdminRequest,
   userController.applyForEventPlanner,
 );
 router.patch(

@@ -7,6 +7,7 @@
   "scripts": {
     "dev:express": "nodemon server.js",
     "start:express": "cross-env NODE_ENV=production node server.js",
+    "start:render": "NODE_EVN=production node server.js",
     "seedAdmin": "node seedAdmin.js"
   },
   "author": "Divine Paul",

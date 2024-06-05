@@ -16,7 +16,7 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   const decoded = await jwtDecode(token);
-  const user = await User.findById(decoded.id);
+  const user = await User.findById(decoded.id).exec();
 
   if (!user) {
     return next(new AppError("User no longer exist", 403));

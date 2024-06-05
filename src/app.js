@@ -2,7 +2,6 @@
 import express from "express";
 import morgan from "morgan";
 import bodyParser from "body-parser";
-import dotenv from "dotenv";
 
 // Project imports
 import AppError from "./utils/appError.js";
@@ -12,8 +11,6 @@ import eventRoutes from "./routes/eventRoutes.js";
 import { apiBaseUrlV1 } from "./utils/apiBaseUrl.js";
 
 const app = express();
-dotenv.config({ path: "./.env" });
-
 app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

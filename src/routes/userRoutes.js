@@ -1,8 +1,8 @@
 import express from "express";
+import restrictTo from "../middlewares/restrictTo.js";
 import userController from "../controllers/userController.js";
 import authController from "../controllers/authController.js";
 import protect from "../middlewares/protect.js";
-import restrictTo from "../middlewares/restrictTo.js";
 
 const router = express.Router();
 
@@ -29,11 +29,14 @@ router.patch(
   userController.rejectEventPlanner,
 );
 
-router.route("/").post(userController.createUser).get(userController.getUser);
+router
+  .route("/")
+  .post(userController.createUser)
+  .get(protect, userController.getAllUsers);
 router
   .route("/:id")
-  .get(userController.getUser)
-  .patch(userController.updateUser)
-  .delete(userController.deleteUser);
+  .get(protect, userController.getUser)
+  .patch(protect, userController.updateUser)
+  .delete(protect, userController.deleteUser);
 
 export default router;

@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
       enum: {
         values: ["user", "eventPlanner", "admin", "superAdmin"],
         message:
-          "Invalid role. Choose from: user, eventPlanner, admin or superAdmin",
+          "Invalid role. Choose one from: user, eventPlanner, admin or superAdmin",
       },
       default: "user",
     },

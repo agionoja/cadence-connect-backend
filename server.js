@@ -11,7 +11,7 @@ const startServer = async () => {
   const port = process.env.PORT || 5000;
 
   try {
-    await connectToDB({ localDb: true });
+    await connectToDB({ localDb: false });
 
     // Find an available port if the default one is in use
     const availablePort = await portFinder.getPortPromise({ port });

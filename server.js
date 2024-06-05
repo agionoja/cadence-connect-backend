@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import dotenv from "dotenv/config.js";
+import dotenv from "dotenv";
 import portFinder from "portfinder";
 import chalk from "chalk";
 
@@ -7,6 +7,7 @@ import app from "./src/app.js";
 import socketIo from "./src/socketIo/socketIo.js";
 import connectToDB from "./src/utils/db.js";
 
+dotenv.config({ path: "./.env" });
 const startServer = async () => {
   const port = process.env.PORT || 5000;
 

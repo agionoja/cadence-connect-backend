@@ -1,1 +1,1 @@
-export const apiBaseUrlV1 = "/cadence-connect/api/v1";
+export const apiBaseUrlV1 = "/api/v1";

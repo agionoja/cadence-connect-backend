@@ -1,9 +1,9 @@
 const filterObject = (object, ...keys) =>
-  Object.keys(object).reduce((sanitizedObject, key) => {
+  Object.keys(object).reduce((filtered, key) => {
     if (keys.includes(key)) {
-      sanitizedObject[key] = object[key];
+      filtered[key] = object[key];
     }
-    return sanitizedObject;
+    return filtered;
   }, {});
 
 export default filterObject;

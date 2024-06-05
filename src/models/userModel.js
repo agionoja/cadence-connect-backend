@@ -78,12 +78,21 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    passwordResetToken: String,
-    passwordResetTokenExpires: Date,
+    applyForEventPlanner: Boolean,
+    eventPlannerApplicationStatus: {
+      type: String,
+      enum: {
+        values: ["pending", "approved", "rejected"],
+        message: `invalid input({VALUE}). Choose from : pending, approved, rejected`,
+      },
+    },
     passwordChangedAt: {
       type: Date,
       select: false,
     },
+    passwordResetToken: String,
+    passwordResetTokenExpires: Date,
+    passwordResetTimer: Date,
     suspensionDuration: Date,
   },
   { timestamps: true },
@@ -100,6 +109,7 @@ userSchema.pre("save", async function (next) {
 userSchema.pre("save", async function (next) {
   if (this.isModified("password") && !this.isNew) {
     this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
+    this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
   }
   next();
 });
@@ -119,7 +129,7 @@ userSchema.methods.passwordChangedAfterJwt = function (iat) {
   return false;
 };
 
-userSchema.methods.generatePasswordResetToken = async function () {
+userSchema.methods.generateAndSavePasswordResetToken = async function () {
   const token = (await promisify(crypto.randomBytes)(32)).toString("hex");
   this.passwordResetTokenExpires = Date.now() + 1000 * 60 * 60;
   this.passwordResetToken = crypto

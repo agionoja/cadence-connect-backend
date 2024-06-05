@@ -34,7 +34,7 @@ const seedAdmin = async () => {
 // Connect to the database and then prompt for admin details
 const run = async () => {
   try {
-    await connectToDB({ localDb: true });
+    await connectToDB({ localDb: false });
     await seedAdmin();
   } catch (error) {
     console.error("Error connecting to the database or saving admin:", error);

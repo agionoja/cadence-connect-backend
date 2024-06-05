@@ -94,6 +94,10 @@ export const approveEventPlanner = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found", 404));
   }
 
+  if (user.email === req?.user.email && req?.user.role !== "superAdmin") {
+    return next(new AppError("You cannot approve your own request", 403));
+  }
+
   if (user.eventPlannerApplicationStatus === "rejected") {
     return next(new AppError("User has been rejected. Apply again", 403));
   }
@@ -117,6 +121,10 @@ export const rejectEventPlanner = catchAsync(async (req, res, next) => {
 
   if (!user) {
     return next(new AppError("User not found", 404));
+  }
+
+  if (user.email === req?.user.email && req?.user.role !== "superAdmin") {
+    return next(new AppError("You cannot reject your own request", 403));
   }
 
   if (user.eventPlannerApplicationStatus === "approved") {

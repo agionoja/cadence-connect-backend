@@ -10,7 +10,11 @@ export default async function connectToDB(options = { localDb: false }) {
       DATABASE_PASSWORD,
     );
     await mongoose.connect(
-      options.localDb ? DATABASE_LOCAL : databaseConnectionString,
+      process.env.NODE_ENV === "production"
+        ? databaseConnectionString
+        : options.localDb
+          ? DATABASE_LOCAL
+          : databaseConnectionString,
     );
 
     console.log(

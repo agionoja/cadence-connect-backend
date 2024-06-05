@@ -33,6 +33,41 @@ const handleDbValidationError = (err) => {
   return new AppError(message, 400);
 };
 
+const handleDbDuplicateError = (err) => {
+  const keyValueEntries = Object.entries(err.keyValue);
+  if (keyValueEntries.length === 1) {
+    const [key, value] = keyValueEntries[0];
+    return new AppError(
+      `The ${key} ${value} is already in use. Please choose a different ${key}.`,
+      400,
+    );
+  } else if (keyValueEntries.length > 1) {
+    const duplicateFields = keyValueEntries.map(([key]) => key).join(", ");
+    return new AppError(
+      `Duplicate values found in fields: ${duplicateFields}. Please ensure unique values for these fields.`,
+      400,
+    );
+  } else {
+    // Handle unexpected case where keyValue is empty or not an object
+    return new AppError("Duplicate key error", 400);
+  }
+};
+
+const handleDbCastError = (err) => {
+  return new AppError(`Invalid ${err.path}: ${err.value}`, 400);
+};
+
+const handleDbInclusionError = (err) => {
+  return new AppError(err.message, 400);
+};
+
+const handleJsonWebTokenError = (err) => {
+  return new AppError("Invalid token. Log in to gain access", 401);
+};
+
+const handleTokenExpiredError = (err) => {
+  return new AppError("Token expired. Log in to gain access", 401);
+};
 const globalError = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.statusText = err.statusText || "Internal Server Error";
@@ -44,8 +79,17 @@ const globalError = (err, req, res, next) => {
 
     if (cloneErr.name === "ValidationError") {
       cloneErr = handleDbValidationError(cloneErr);
+    } else if (cloneErr.code === 11000) {
+      cloneErr = handleDbDuplicateError(cloneErr);
+    } else if (cloneErr.code === 31254) {
+      cloneErr = handleDbInclusionError(cloneErr);
+    } else if (cloneErr.name === "CastError") {
+      cloneErr = handleDbCastError(cloneErr);
+    } else if (cloneErr.name === "JsonWebTokenError") {
+      cloneErr = handleJsonWebTokenError(cloneErr);
+    } else if (cloneErr.name === "TokenExpiredError") {
+      cloneErr = handleTokenExpiredError(cloneErr);
     }
-    console.log(cloneErr.name);
 
     sendProdError(cloneErr, res);
   }

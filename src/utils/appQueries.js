@@ -1,5 +1,3 @@
-import * as querystring from "node:querystring";
-
 export default class AppQueries {
   constructor(queryObject, query) {
     this.queryObject = queryObject;
@@ -9,7 +7,7 @@ export default class AppQueries {
   filter() {
     const excludedFields = ["limit", "sort", "page", "fields"];
     const copiedQueryObject = { ...this.queryObject };
-    excludedFields.forEach((field) => delete excludedFields[field]);
+    excludedFields.forEach((field) => delete copiedQueryObject[field]);
 
     const queryObject$ = JSON.parse(
       JSON.stringify(copiedQueryObject).replace(
@@ -33,7 +31,7 @@ export default class AppQueries {
   limitFields() {
     if (this.queryObject.fields) {
       const limitValue = this.queryObject.fields.split(",").join(" ");
-      this.query = this.query.skip(limitValue);
+      this.query = this.query.select(limitValue);
     }
     return this;
   }

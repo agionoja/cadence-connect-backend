@@ -19,16 +19,16 @@ const protect = catchAsync(async (req, res, next) => {
   const user = await User.findById(decoded.id);
 
   if (!user) {
-    return next(new AppError("User no longer exists", 403));
+    return next(new AppError("User no longer exist", 403));
   }
 
-  //   TODO: implement suspend and ban feature
+  //   TODO: implement suspend and termination features
 
   if (user.passwordChangedAfterJwt(decoded.iat)) {
     return next(new AppError("User recently changed password", 403));
   }
 
-  req.user = user; // FIXME: remove the password from the user object
+  req.user = user;
   next();
 });
 

@@ -2,6 +2,7 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import axios from "axios";
 import bodyParser from "body-parser";
 
 // Project imports
@@ -10,16 +11,33 @@ import globalError from "./middlewares/globalError.js";
 import userRoutes from "./routes/userRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import { apiBaseUrlV1 } from "./utils/apiBaseUrl.js";
-
+import cron from "node-cron";
 const app = express();
 app.use(cors());
 app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+cron.schedule("*/10 * * * *", async () => {
+  try {
+    const response = await axios.post(
+      "https://cadence-connect-backend.onrender.com/api/v1/users/sign-in",
+      {
+        email: process.env.CRONE_EMAIL,
+        password: process.env.CRONE_PASSWORD,
+      },
+    );
+
+    console.log(response.data.data.user);
+    console.log("Running a task every 10 minutes");
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 // Routes handler
-app.use(`${apiBaseUrlV1}/users`, userRoutes);
-app.use(`${apiBaseUrlV1}/events`, eventRoutes);
+app.use(`/api/v1/users`, userRoutes);
+app.use(`/api/v1/events`, eventRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`${req.originalUrl} is not on this server`, 404));

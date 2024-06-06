@@ -50,7 +50,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   }
 
   const resetToken = await user.generateAndSavePasswordResetToken();
-  const resetTokenUrl = `${req.protocol}://${req.get("host")}/${apiBaseUrlV1}/reset-password/${resetToken}`;
+  const resetTokenUrl = `${req.protocol}://${req.get("host")}${apiBaseUrlV1}/reset-password/${resetToken}`;
   const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetTokenUrl}`;
 
   try {
@@ -73,13 +73,13 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
     return next(new AppError(err.message, 500));
   }
-  //TODO: remove this when email service works
-  res.status(200).json({
-    statusText: "success",
-    message: "The password reset token has been sent to your email",
-    resetTokenUrl,
-    resetToken,
-  });
+  // //TODO: remove this when email service works
+  // res.status(200).json({
+  //   statusText: "success",
+  //   message: "The password reset token has been sent to your email",
+  //   resetTokenUrl,
+  //   resetToken,
+  // });
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {

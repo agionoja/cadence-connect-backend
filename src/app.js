@@ -12,13 +12,14 @@ import userRoutes from "./routes/userRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import { apiBaseUrlV1 } from "./utils/apiBaseUrl.js";
 import cron from "node-cron";
+
 const app = express();
 app.use(cors());
 app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-cron.schedule("*/10 * * * *", async () => {
+cron.schedule("*/15 * * * *", async () => {
   try {
     const response = await axios.post(
       "https://cadence-connect-backend.onrender.com/api/v1/users/sign-in",
@@ -28,7 +29,7 @@ cron.schedule("*/10 * * * *", async () => {
       },
     );
 
-    console.log(response.data.data.user);
+    console.log(response.data.data.user.name + " is signed in.");
     console.log("Running a task every 10 minutes");
   } catch (err) {
     console.log("Error signing in", err.mock);

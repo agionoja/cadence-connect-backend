@@ -65,7 +65,7 @@ export const deleteUser = catchAsync(async (req, res, next) => {
 
 export const applyForEventPlanner = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
-  validateEventPlannerRequest(user, "apply", next);
+  validateEventPlannerRequest(req, user, next, "apply");
   user.applyForEventPlanner = true;
   user.eventPlannerApplicationStatus = "pending";
   await user.save({ validateBeforeSave: false });
@@ -77,7 +77,7 @@ export const applyForEventPlanner = catchAsync(async (req, res, next) => {
 
 export const approveEventPlanner = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
-  validateEventPlannerRequest(user, "approve", next);
+  validateEventPlannerRequest(req, user, next, "approve");
   user.eventPlannerApplicationStatus = "approved";
   user.role = "eventPlanner";
   await user.save({ validateBeforeSave: false });
@@ -89,7 +89,7 @@ export const approveEventPlanner = catchAsync(async (req, res, next) => {
 
 export const rejectEventPlanner = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
-  validateEventPlannerRequest(user, "reject", next);
+  validateEventPlannerRequest(req, user, next, "reject");
   user.eventPlannerApplicationStatus = "rejected";
   await user.save({ validateBeforeSave: false });
   res.status(200).json({

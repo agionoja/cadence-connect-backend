@@ -31,7 +31,7 @@ cron.schedule("*/10 * * * *", async () => {
     console.log(response.data.data.user);
     console.log("Running a task every 10 minutes");
   } catch (err) {
-    console.log(err);
+    console.log("Error signing in", err.mock);
   }
 });
 

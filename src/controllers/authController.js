@@ -73,6 +73,13 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
 
     return next(new AppError(err.message, 500));
   }
+  //TODO: remove this when email service works
+  res.status(200).json({
+    statusText: "success",
+    message: "The password reset token has been sent to your email",
+    resetTokenUrl,
+    resetToken,
+  });
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {

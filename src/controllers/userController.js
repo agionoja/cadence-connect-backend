@@ -3,7 +3,7 @@ import AppQueries from "../utils/appQueries.js";
 import catchAsync from "../utils/catchAsync.js";
 import filterObject from "../utils/filterObject.js";
 import User from "../models/userModel.js";
-import validateEventPlannerRequest from "../utils/validateEventPlannerRequest.js";
+import validateEventPlannerRequest from "../validators/validateEventPlannerRequest.js";
 
 export const createUser = catchAsync(async (req, res, next) => {
   const body = filterObject(

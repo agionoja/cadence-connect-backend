@@ -1,4 +1,4 @@
-import AppError from "./appError.js";
+import AppError from "../utils/appError.js";
 
 const validateEventPlannerRequest = (user, action, next) => {
   if (!user) {

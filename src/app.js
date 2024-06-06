@@ -29,7 +29,7 @@ cron.schedule("*/15 * * * *", async () => {
       },
     );
 
-    console.log(response.data.data.user);
+    console.log(response.data.data.user.name + " is signed in.");
     console.log("Running a task every 10 minutes");
   } catch (err) {
     console.log("Error signing in", err.mock);

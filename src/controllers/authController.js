@@ -46,11 +46,11 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).exec();
 
   if (!user) {
-    return next(new AppError("Email does not exist", 404));
+    return next(new AppError("User does not exist", 404));
   }
 
   const resetToken = await user.generateAndSavePasswordResetToken();
-  const resetTokenUrl = `${req.protocol}://${req.get("host")}${apiBaseUrlV1}/reset-password/${resetToken}`;
+  const resetTokenUrl = `${req.protocol}://${req.get("host")}/api/v1/reset-password/${resetToken}`;
   const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetTokenUrl}`;
 
   try {

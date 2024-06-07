@@ -4,6 +4,8 @@ import morgan from "morgan";
 import cors from "cors";
 import axios from "axios";
 import bodyParser from "body-parser";
+import moment from "moment-timezone";
+import cron from "node-cron";
 
 // Project imports
 import AppError from "./utils/appError.js";
@@ -11,7 +13,6 @@ import globalError from "./middlewares/globalError.js";
 import userRoutes from "./routes/userRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import { apiBaseUrlV1 } from "./utils/apiBaseUrl.js";
-import cron from "node-cron";
 
 const app = express();
 app.use(cors());
@@ -29,10 +30,18 @@ cron.schedule("*/15 * * * *", async () => {
       },
     );
 
-    console.log(response.data.data.user.name + " is signed in.");
-    console.log("Running a task every 15 minutes");
+    const currentTimeInWAT = moment()
+      .tz("Africa/Lagos")
+      .format("YYYY-MM-DD HH:mm:ss");
+    console.log(
+      response.data.data.user.name +
+        " is signed in at " +
+        currentTimeInWAT +
+        " WAT.",
+    );
+    // console.log("Running a task every 15 minutes");
   } catch (err) {
-    console.log("Error signing in", err.mock);
+    console.log("Error signing in", err.message);
   }
 });
 

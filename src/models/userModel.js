@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import pointSchema from "./pointSchema.js";
+import { APPLICATION_STATUS, ROLES } from "../utils/constants.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -26,7 +27,12 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: ["user", "eventPlanner", "admin", "superAdmin"],
+        values: [
+          ROLES.REGULAR_USER,
+          ROLES.EVENT_PLANNER,
+          ROLES.ADMIN,
+          ROLES.SUPER_ADMIN,
+        ],
         message:
           "Invalid role. Choose one from: user, eventPlanner, admin or superAdmin",
       },
@@ -82,7 +88,11 @@ const userSchema = new mongoose.Schema(
     eventPlannerApplicationStatus: {
       type: String,
       enum: {
-        values: ["pending", "approved", "rejected"],
+        values: [
+          APPLICATION_STATUS.APPROVED,
+          APPLICATION_STATUS.PENDING,
+          APPLICATION_STATUS.REJECTED,
+        ],
         message: `invalid input({VALUE}). Choose from : pending, approved, rejected`,
       },
     },

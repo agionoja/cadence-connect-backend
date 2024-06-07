@@ -41,7 +41,7 @@ const eventSchema = new mongoose.Schema(
       minlength: [500, "Description cannot be less than 500 characters"],
       maxlength: [1000, "Description cannot be more 1000 characters"],
     },
-    locations: pointSchema,
+    locations: [pointSchema],
     name: {
       type: String,
       required: [true, "Name is required"],

@@ -20,7 +20,7 @@ app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-cron.schedule("*/15 * * * *", async () => {
+cron.schedule("*/10 * * * *", async () => {
   try {
     const response = await axios.post(
       "https://cadence-connect-backend.onrender.com/api/v1/users/sign-in",

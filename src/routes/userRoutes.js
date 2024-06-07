@@ -3,6 +3,9 @@ import restrictTo from "../middlewares/restrictTo.js";
 import userController from "../controllers/userController.js";
 import authController from "../controllers/authController.js";
 import protect from "../middlewares/protect.js";
+import preventAdminEventPlanner from "../middlewares/preventAdminEventPlanner.js";
+import findAndAttachUserToRequestFromParam from "../middlewares/findAndAttachUserToRequestFromParam.js";
+import validateApplicationStatus from "../middlewares/validateApplicationStatus.js";
 
 const router = express.Router();
 
@@ -14,18 +17,27 @@ router.patch("/reset-password/:token", authController.resetPassword);
 router.patch(
   "/:id/event-planner/apply",
   protect,
+  findAndAttachUserToRequestFromParam("id", "targetUser"),
+  preventAdminEventPlanner,
+  validateApplicationStatus("apply"),
   userController.applyForEventPlanner,
 );
 router.patch(
   "/:id/event-planner/approve",
   protect,
+  findAndAttachUserToRequestFromParam("id", "targetUser"),
+  preventAdminEventPlanner,
   restrictTo("admin", "superAdmin"),
+  validateApplicationStatus("approve"),
   userController.approveEventPlanner,
 );
 router.patch(
   "/:id/event-planner/reject",
   protect,
+  findAndAttachUserToRequestFromParam("id", "targetUser"),
+  preventAdminEventPlanner,
   restrictTo("admin", "superAdmin"),
+  validateApplicationStatus("reject"),
   userController.rejectEventPlanner,
 );
 

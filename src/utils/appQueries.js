@@ -16,6 +16,8 @@ export default class AppQueries {
       ),
     );
 
+    console.log(queryObject$);
+
     this.query = this.query.find(queryObject$);
     return this;
   }

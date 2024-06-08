@@ -33,8 +33,7 @@ const userSchema = new mongoose.Schema(
           ROLES.ADMIN,
           ROLES.SUPER_ADMIN,
         ],
-        message:
-          "Invalid role. Choose one from: user, eventPlanner, admin or superAdmin",
+        message: `Invalid role. Choose one from: ${ROLES.REGULAR_USER}, ${ROLES.EVENT_PLANNER}, ${ROLES.ADMIN}, ${ROLES.SUPER_ADMIN}`,
       },
       default: "user",
     },
@@ -93,7 +92,7 @@ const userSchema = new mongoose.Schema(
           APPLICATION_STATUS.PENDING,
           APPLICATION_STATUS.REJECTED,
         ],
-        message: `invalid input({VALUE}). Choose from : pending, approved, rejected`,
+        message: `invalid input({VALUE}). Choose from : ${APPLICATION_STATUS.PENDING}, ${APPLICATION_STATUS.APPROVED} ,${APPLICATION_STATUS.REJECTED}`,
       },
     },
     passwordChangedAt: {
@@ -104,6 +103,7 @@ const userSchema = new mongoose.Schema(
     passwordResetTokenExpires: Date,
     passwordResetTimer: Date,
     suspensionDuration: Date,
+    suspendedAt: Date,
   },
   { timestamps: true },
 );
@@ -113,13 +113,17 @@ userSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 12);
     this.passwordConfirm = undefined;
   }
+
+  if (!this.isNew) {
+    this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
+    this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
+  }
   next();
 });
 
-userSchema.pre("save", async function (next) {
-  if (this.isModified("password") && !this.isNew) {
-    this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
-    this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
+userSchema.pre(/^find/, function (next) {
+  if (!this.getQuery().includeTerminated) {
+    this.find({ isTerminated: { $ne: true } });
   }
   next();
 });
@@ -137,6 +141,20 @@ userSchema.methods.passwordChangedAfterJwt = function (iat) {
     return passwordChangedAtIat > iat;
   }
   return false;
+};
+
+userSchema.methods.suspendUser = async function (
+  duration = 1000 * 60 * 60 * 60 * 24 * 14,
+) {
+  this.isSuspended = true;
+  this.suspensionDuration = Date.now() + duration;
+  this.suspendedAt = Date.now();
+  await this.save({ validateBeforeSave: false });
+};
+
+userSchema.methods.terminateUser = async function () {
+  this.isTerminated = true;
+  await this.save({ validateBeforeSave: false });
 };
 
 userSchema.methods.generateAndSavePasswordResetToken = async function () {

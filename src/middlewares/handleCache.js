@@ -11,7 +11,7 @@ const handleCache = (req, res, next) => {
     }
 
     res.set({
-      "cache-control": "max-age=3600",
+      "cache-control": "max-age=3600 must-revalidate",
       etag,
     });
 

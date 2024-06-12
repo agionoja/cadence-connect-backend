@@ -5,7 +5,13 @@ export default class AppQueries {
   }
 
   filter() {
-    const excludedFields = ["limit", "sort", "page", "fields"];
+    const excludedFields = [
+      "limit",
+      "sort",
+      "page",
+      "fields",
+      "includeTerminated",
+    ];
     const copiedQueryObject = { ...this.queryObject };
     excludedFields.forEach((field) => delete copiedQueryObject[field]);
 
@@ -15,8 +21,6 @@ export default class AppQueries {
         (match) => `$${match}`,
       ),
     );
-
-    console.log(queryObject$);
 
     this.query = this.query.find(queryObject$);
     return this;

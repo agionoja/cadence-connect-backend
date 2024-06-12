@@ -1,11 +1,11 @@
 import catchAsync from "../utils/catchAsync.js";
 import Event from "../models/eventModel.js";
-import filterObject from "../utils/filterObject.js";
+import filterResBody from "../utils/filterResBody.js";
 import AppError from "../utils/appError.js";
 import AppQueries from "../utils/appQueries.js";
 
 export const createEvent = catchAsync(async (req, res, next) => {
-  const body = filterObject(
+  const body = filterResBody(
     req.body,
     "name",
     "categories",
@@ -60,7 +60,7 @@ export const getAllEvents = catchAsync(async (req, res, next) => {
 });
 
 export const updateEvent = catchAsync(async (req, res, next) => {
-  const body = filterObject(
+  const body = filterResBody(
     req.body,
     "name",
     "categories",

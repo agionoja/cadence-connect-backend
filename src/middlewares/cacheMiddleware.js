@@ -1,6 +1,6 @@
 import generateEtag from "../utils/generateEtag.js";
 
-const handleCache = (req, res, next) => {
+export const cacheControl = (req, res, next) => {
   res.sendReponse = res.json;
 
   res.json = (body) => {
@@ -20,5 +20,3 @@ const handleCache = (req, res, next) => {
 
   next();
 };
-
-export default handleCache;

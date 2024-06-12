@@ -6,6 +6,7 @@ export default class AppError extends Error {
       : "Internal Server Error";
     this.statusCode = statusCode;
     this.isOperational = true;
+    this.name = "AppError";
     Error.captureStackTrace(this, this.constructor);
   }
 }

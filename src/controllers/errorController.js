@@ -53,13 +53,13 @@ const handleDbDuplicateError = (err) => {
   }
 };
 
-const handleDbCastError = (err) => {
-  return new AppError(`Invalid ${err.path}: ${err.value}`, 400);
-};
+const handleDbCastError = (err) =>
+  new AppError(`Invalid ${err.path}: ${err.value}`, 400);
 
-const handleDbInclusionError = (err) => {
-  return new AppError(err.message, 400);
-};
+const handleDbInclusionError = (err) => new AppError(err.message, 400);
+
+const handleDbMongoServerSelectionError = (err) =>
+  new AppError(err.message, 500);
 
 const handleJsonWebTokenError = (err) => {
   return new AppError("Invalid token. Log in to gain access", 401);
@@ -68,6 +68,7 @@ const handleJsonWebTokenError = (err) => {
 const handleTokenExpiredError = (err) => {
   return new AppError("Token expired. Log in to gain access", 401);
 };
+
 const globalError = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.statusText = err.statusText || "Internal Server Error";
@@ -89,6 +90,8 @@ const globalError = (err, req, res, next) => {
       cloneErr = handleJsonWebTokenError(cloneErr);
     } else if (cloneErr.name === "TokenExpiredError") {
       cloneErr = handleTokenExpiredError(cloneErr);
+    } else if (cloneErr.name === "MongoServerSelectionError") {
+      cloneErr = handleDbMongoServerSelectionError(cloneErr);
     }
 
     sendProdError(cloneErr, res);

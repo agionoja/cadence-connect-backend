@@ -1,6 +1,6 @@
 import { jwtSign } from "./jwt.js";
 
-const createSendToken = async (res, user, statusCode = 200) => {
+const sendResToken = async (res, user, statusCode = 200) => {
   const token = await jwtSign(user._id);
   res.status(statusCode).json({
     token,
@@ -9,4 +9,4 @@ const createSendToken = async (res, user, statusCode = 200) => {
   });
 };
 
-export default createSendToken;
+export default sendResToken;

@@ -1,4 +1,4 @@
-const filterObject = (object, ...keys) =>
+const filterResBody = (object, ...keys) =>
   Object.keys(object).reduce((filtered, key) => {
     if (keys.includes(key)) {
       filtered[key] = object[key];
@@ -6,4 +6,4 @@ const filterObject = (object, ...keys) =>
     return filtered;
   }, {});
 
-export default filterObject;
+export default filterResBody;

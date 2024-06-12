@@ -75,15 +75,6 @@ const userSchema = new mongoose.Schema(
       },
       select: false,
     },
-    isSuspended: {
-      type: Boolean,
-      default: false,
-    },
-    isTerminated: {
-      type: Boolean,
-      default: false,
-    },
-    applyForEventPlanner: Boolean,
     eventPlannerApplicationStatus: {
       type: String,
       enum: {
@@ -99,11 +90,15 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    isSuspended: Boolean,
+    isTerminated: Boolean,
+    applyForEventPlanner: Boolean,
     passwordResetToken: String,
     passwordResetTokenExpires: Date,
     passwordResetTimer: Date,
     suspensionDuration: Date,
-    suspendedAt: Date,
+    suspensions: [Date],
+    timezone: String,
   },
   { timestamps: true },
 );
@@ -112,11 +107,11 @@ userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
     this.passwordConfirm = undefined;
-  }
 
-  if (!this.isNew) {
-    this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
-    this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
+    if (!this.isNew) {
+      this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
+      this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
+    }
   }
   next();
 });
@@ -144,11 +139,17 @@ userSchema.methods.passwordChangedAfterJwt = function (iat) {
 };
 
 userSchema.methods.suspendUser = async function (
-  duration = 1000 * 60 * 60 * 60 * 24 * 14,
+  duration = 60 * 60 * 60 * 24 * 14,
 ) {
   this.isSuspended = true;
-  this.suspensionDuration = Date.now() + duration;
-  this.suspendedAt = Date.now();
+  this.suspensionDuration = Date.now() + duration * 1000;
+  this.suspensions = [...this.suspensions, Date.now()]; //TODO: suspensions is not appended
+  await this.save({ validateBeforeSave: false });
+};
+
+userSchema.methods.unsuspendUser = async function () {
+  this.isSuspended = undefined;
+  this.suspensionDuration = undefined;
   await this.save({ validateBeforeSave: false });
 };
 

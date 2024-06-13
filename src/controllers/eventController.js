@@ -1,6 +1,5 @@
-import catchAsync from "../utils/catchAsync.js";
+import { catchAsync, filterResBody } from "../utils/utils.js";
 import Event from "../models/eventModel.js";
-import filterResBody from "../utils/filterResBody.js";
 import AppError from "../utils/appError.js";
 import AppQueries from "../utils/appQueries.js";
 

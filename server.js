@@ -22,7 +22,7 @@ const startServer = async () => {
     server.listen(availablePort, () => {
       console.log(
         chalk.greenBright(
-          `Server is running on ${chalk.blueBright.underline(`http://localhost:${availablePort}`)}`,
+          `Server is running on ${chalk.blueBright.underline(`http://127.0.0.1:${availablePort}`)}`,
         ),
       );
     });

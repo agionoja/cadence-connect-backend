@@ -2,16 +2,10 @@ import express from "express";
 import * as userController from "../controllers/userController.js";
 import * as authController from "../controllers/authController.js";
 import * as cacheMiddleware from "../middlewares/cacheMiddleware.js";
-import * as userMiddleware from "../middlewares/userMiddleware.js";
 import { ROLES } from "../utils/constants.js";
 
 const router = express.Router();
 const { SUPER_ADMIN, ADMIN } = ROLES;
-
-////////////////////////////////////////////////////////////////////////////////
-/*METHODS PASSED TO THE RES OBJECT WILL BE USED ON DEMANDED*/
-////////////////////////////////////////////////////////////////////////////////
-router.use(userMiddleware.methods);
 
 router.post("/sign-up", authController.signUp);
 router.post("/sign-in", authController.signIn);
@@ -23,7 +17,8 @@ router.patch("/reset-password/:token", authController.resetPassword);
 ////////////////////////////////////////////////////////////////////////////////
 router.use(authController.protect);
 
-router.patch("/update-password/:id", authController.updateMyPassword);
+router.patch("/update-password/", authController.updateMyPassword);
+router.patch("/update-me", userController.updateMe);
 router.patch(
   "/:id/event-planner/apply",
   userController.eventPlannerApplication("apply"),
@@ -32,8 +27,7 @@ router.patch(
 ////////////////////////////////////////////////////////////////////////////////
 /*RESTRICTED ROUTES*/
 ////////////////////////////////////////////////////////////////////////////////
-
-// router.use(authController.restrictTo(SUPER_ADMIN, ADMIN));
+router.use(authController.restrictTo(SUPER_ADMIN, ADMIN));
 
 router
   .route("/")

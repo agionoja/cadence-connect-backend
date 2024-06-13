@@ -7,8 +7,7 @@ import AppError from "./appError.js";
 const { DATABASE_LOCAL, DATABASE_PASSWORD, DATABASE_URL } = process.env;
 
 export default async function connectToDB(options = { localDb: false }) {
-  const isOnline =
-    process.env.NODE_ENV === "production" ? true : !options.localDb;
+  const isOnline = process.env.NODE_ENV === "production" ? true : !options.localDb;
   const maxRetries = 3;
   const onlineDb = DATABASE_URL.replace("<password>", DATABASE_PASSWORD);
 
@@ -35,9 +34,7 @@ export default async function connectToDB(options = { localDb: false }) {
         // Switch to local database
         try {
           await mongoose.connect(DATABASE_LOCAL);
-          console.log(
-            chalk.blueBright("Local Database is connected successfully"),
-          );
+          console.log(chalk.blueBright("Local Database is connected successfully"));
           connected = true;
         } catch (localErr) {
           console.error(chalk.red("Failed to connect to the local database."));
@@ -45,27 +42,36 @@ export default async function connectToDB(options = { localDb: false }) {
         }
       } else {
         console.error(
-          chalk.red(
-            `Attempt ${retries} to connect to the online database failed.`,
-          ),
+          chalk.red(`Attempt ${retries} to connect to the online database failed.`),
         );
       }
     }
   }
 }
 
-export const findUserById = async (id, lean = false) => {
-  const user = await User.findById(id, {}, { lean }).exec();
+export const findUserById = async (
+  id,
+  { errMsg = "User not Found", lean = false } = {},
+  cb = (query) => query,
+) => {
+  const query = cb(User.findById(id, {}, { lean }));
+  const user = await query.exec();
+
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError(errMsg, 404);
   }
   return user;
 };
 
-export const findEventById = async (id, lean = false) => {
-  const event = await Event.findById(id, {}, { lean }).exec();
+export const findEventById = async (
+  id,
+  { errMsg = "User not Found", lean = false } = {},
+  cb = (query) => query,
+) => {
+  const query = cb(Event.findById(id, {}, { lean }));
+  const event = await query.exec();
   if (!event) {
-    throw new AppError("Event not found", 404);
+    throw new AppError(errMsg, 404);
   }
   return event;
 };

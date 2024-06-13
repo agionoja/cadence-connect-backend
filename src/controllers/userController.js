@@ -1,11 +1,10 @@
 import AppError from "../utils/appError.js";
 import AppQueries from "../utils/appQueries.js";
-import catchAsync from "../utils/catchAsync.js";
-import filterResBody from "../utils/filterResBody.js";
-import User from "../models/userModel.js";
+import * as userThrowers from "../utils/userCheckThrowers.js";
+import { catchAsync, filterResBody, objectValueToBool } from "../utils/utils.js";
 import { findUserById } from "../utils/db.js";
+import User from "../models/userModel.js";
 import { SUSPENSION_DURATION } from "../utils/constants.js";
-import objectValueToBool from "../utils/objectValueToBool.js";
 
 export const createUser = catchAsync(async (req, res, next) => {
   const userData = filterResBody(
@@ -24,7 +23,7 @@ export const createUser = catchAsync(async (req, res, next) => {
 });
 
 export const getUser = catchAsync(async (req, res, next) => {
-  const user = await findUserById(req.params.id, true);
+  const user = await findUserById(req.params.id, { lean: true });
   res.status(200).json({
     statusText: "success",
     data: {
@@ -34,10 +33,7 @@ export const getUser = catchAsync(async (req, res, next) => {
 });
 
 export const getAllUsers = catchAsync(async (req, res, next) => {
-  const appQueries = new AppQueries(
-    req.query,
-    User.find({}, {}, { lean: true }),
-  )
+  const appQueries = new AppQueries(req.query, User.find({}, {}, { lean: true }))
     .filter()
     .sort()
     .limitFields()
@@ -47,12 +43,65 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     statusText: "success",
-    numResult: users.length,
+    resultCount: users.length,
     data: { users },
   });
 });
 
-export const updateUser = catchAsync(async (req, res, next) => {});
+export const updateUser = catchAsync(async (req, res, next) => {
+  const { role } = req.body;
+
+  if (role && role !== "user" && role !== "eventPlanner") {
+    return next(
+      new AppError(
+        "Invalid role. You can only assign roles 'user' or 'eventPlanner'.",
+        400,
+      ),
+    );
+  }
+
+  const userData = filterResBody(req.body, "name", "email", "role");
+
+  const updatedUser = await User.findByIdAndUpdate(req.params.id, userData, {
+    new: true,
+    runValidators: true,
+    lean: true,
+  });
+
+  if (!updatedUser) {
+    return next(new AppError("No user found with that ID.", 404));
+  }
+
+  res.status(200).json({
+    statusText: "success",
+    data: { updatedUser },
+  });
+});
+
+export const updateMe = catchAsync(async (req, res, next) => {
+  const { user } = req;
+
+  if (req.body.password || req.body.confirmPassword) {
+    return next(
+      new AppError(
+        "This route is not for password updates. Please use /users/update-Password",
+        400,
+      ),
+    );
+  }
+
+  const userData = filterResBody(req.body, "email", "name");
+  const updatedUser = await User.findByIdAndUpdate(user.id, userData, {
+    runValidators: true,
+    new: true,
+    lean: true,
+  });
+
+  res.status(200).json({
+    statusText: "success",
+    data: { updatedUser },
+  });
+});
 
 export const deleteUser = catchAsync(async (req, res, next) => {
   const deletedUser = await User.findByIdAndDelete(req.params.id, {
@@ -67,7 +116,7 @@ export const deleteUser = catchAsync(async (req, res, next) => {
 
 export const deleteManyUsers = catchAsync(async (req, res, next) => {
   const query = objectValueToBool(req?.query);
-  const { deletedCount, acknowledged } = await res.deleteManyUserCheck(
+  const { deletedCount, acknowledged } = await userThrowers.deleteManyAction(
     query,
     User,
   );
@@ -86,8 +135,7 @@ export const deleteManyUsers = catchAsync(async (req, res, next) => {
 export const disciplineUser = (action) =>
   catchAsync(async (req, res, next) => {
     const user = await findUserById(req.params.id);
-    res.checkUserStatus(req.user);
-    res.disciplineUserCheck(user, action);
+    userThrowers.disciplineAction(user, action);
 
     if (action.startsWith("suspend")) {
       await user.suspendUser(SUSPENSION_DURATION.HOUR);
@@ -106,8 +154,7 @@ export const disciplineUser = (action) =>
 export const eventPlannerApplication = (action) =>
   catchAsync(async (req, res, next) => {
     const user = await findUserById(req.params.id);
-    res.checkUserStatus(user);
-    res.validateApplicationStatus(user, action);
+    userThrowers.applicationStatus(user, action);
 
     switch (action) {
       case "apply": {

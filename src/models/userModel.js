@@ -3,7 +3,14 @@ import { promisify } from "node:util";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import pointSchema from "./pointSchema.js";
-import { APPLICATION_STATUS, ROLES } from "../utils/constants.js";
+import {
+  APPLICATION_STATUS,
+  ROLES,
+  SUSPENSION_DURATION,
+} from "../utils/constants.js";
+
+const { ADMIN, SUPER_ADMIN, REGULAR_USER, EVENT_PLANNER } = ROLES;
+const { HOUR, DAY, BI_WEEK, WEEK, MONTH } = SUSPENSION_DURATION;
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,17 +34,15 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: [
-          ROLES.REGULAR_USER,
-          ROLES.EVENT_PLANNER,
-          ROLES.ADMIN,
-          ROLES.SUPER_ADMIN,
-        ],
-        message: `Invalid role. Choose one from: ${ROLES.REGULAR_USER}, ${ROLES.EVENT_PLANNER}, ${ROLES.ADMIN}, ${ROLES.SUPER_ADMIN}`,
+        values: [REGULAR_USER, EVENT_PLANNER, ADMIN, SUPER_ADMIN],
+        message: `Invalid role. Choose one from: ${REGULAR_USER}, ${EVENT_PLANNER}, ${ADMIN}, ${SUPER_ADMIN}`,
       },
       default: "user",
     },
-    location: pointSchema,
+    location: {
+      type: pointSchema,
+      index: "2dsphere",
+    },
     profileImage: String,
     password: {
       type: String,
@@ -90,13 +95,22 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    passwordResetTimer: {
+      type: Date,
+      select: false,
+    },
+    suspensionDuration: {
+      type: Date,
+      enum: {
+        values: [HOUR, DAY, WEEK, BI_WEEK, MONTH],
+        //tODO: PROVIDE A BETTER ERROR MESSAGE
+      },
+    },
     isSuspended: Boolean,
     isTerminated: Boolean,
     applyForEventPlanner: Boolean,
     passwordResetToken: String,
     passwordResetTokenExpires: Date,
-    passwordResetTimer: Date,
-    suspensionDuration: Date,
     suspensions: [Date],
     timezone: String,
   },

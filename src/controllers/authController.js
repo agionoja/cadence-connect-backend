@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
 import AppError from "../utils/appError.js";
-import catchAsync from "../utils/catchAsync.js";
-import filterResBody from "../utils/filterResBody.js";
-import sendResToken from "../utils/sendResToken.js";
+import { catchAsync, filterResBody, sendResToken } from "../utils/utils.js";
 import User from "../models/userModel.js";
 import sendEmail from "../utils/email.js";
 import { jwtDecode } from "../utils/jwt.js";
+import { findUserById } from "../utils/db.js";
+import { userStatus } from "../utils/userCheckThrowers.js";
 
 export const signUp = catchAsync(async (req, res, next) => {
   const body = filterResBody(
@@ -32,7 +32,7 @@ export const signIn = catchAsync(async (req, res, next) => {
     return next(new AppError("Password or email is incorrect", 401));
   }
 
-  res.checkUserStatus(user);
+  userStatus(user);
   user.password = undefined;
   await sendResToken(res, user, 200);
 });
@@ -50,7 +50,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("User does not exist", 404));
   }
 
-  res.checkUserStatus(user);
+  userStatus(user);
   const resetToken = await user.generateAndSavePasswordResetToken();
   const resetTokenUrl = `${req.protocol}://${req.get("host")}/api/v1/reset-password/${resetToken}`;
   const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetTokenUrl}`;
@@ -93,7 +93,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Token is invalid or is expired", 401));
   }
 
-  res.checkUserStatus(user);
+  userStatus(user);
   const { password, passwordConfirm } = req.body;
 
   if (await user.comparePassword(password, user.password)) {
@@ -169,13 +169,14 @@ export const protect = catchAsync(async (req, res, next) => {
   }
 
   const decoded = await jwtDecode(token);
-  const user = await User.findById(decoded.id).select("+password").exec();
-
-  if (!user) {
-    return next(
-      new AppError("The user belonging to this account no longer exists.", 401),
-    );
-  }
+  const user = await findUserById(
+    decoded.id,
+    {
+      errMsg: "The user belonging to this account no longer exists.",
+    },
+    (query) => query.select("+password +passwordChangedAt"),
+  );
+  userStatus(user);
 
   if (user.passwordChangedAfterJwt(decoded.iat)) {
     return next(

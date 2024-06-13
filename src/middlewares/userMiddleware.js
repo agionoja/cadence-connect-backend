@@ -29,7 +29,7 @@ export const methods = (req, res, next) => {
     }
   };
 
-  res.validateApplicationStatus = (user, action) => {
+  res.applicationStatus = (user, action) => {
     if (user.role === ROLES.EVENT_PLANNER) {
       throw new AppError("User is already an event planner", 409);
     }

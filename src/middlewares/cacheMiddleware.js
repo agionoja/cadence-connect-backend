@@ -1,7 +1,7 @@
-import generateEtag from "../utils/generateEtag.js";
+import { generateEtag } from "../utils/utils.js";
 
 export const cacheControl = (req, res, next) => {
-  res.sendReponse = res.json;
+  res.sendResponse = res.json;
 
   res.json = (body) => {
     const etag = generateEtag(body);
@@ -15,7 +15,7 @@ export const cacheControl = (req, res, next) => {
       etag,
     });
 
-    return res.sendReponse(body);
+    return res.sendResponse(body);
   };
 
   next();

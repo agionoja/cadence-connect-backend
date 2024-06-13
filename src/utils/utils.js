@@ -1,15 +1,12 @@
 import { jwtSign } from "./jwt.js";
 import crypto from "node:crypto";
 
-export const apiBaseUrlVersion = (version) => {
-  return `api/v${version}`;
-};
+export const apiBaseUrlVersion = (version) => `/api/v${version}`;
 
 export const generateEtag = (data) =>
   crypto.createHash("md5").update(JSON.stringify(data)).digest("hex");
 
-export const catchAsync = (cb) => (req, res, next) =>
-  cb(req, res, next).catch(next);
+export const catchAsync = (cb) => (req, res, next) => cb(req, res, next).catch(next);
 
 export const filterResBody = (object, ...keys) =>
   Object.keys(object).reduce((filtered, key) => {

@@ -1,5 +1,7 @@
-import { APPLICATION_STATUS, ROLES } from "./constants.js";
+import { APPLICATION_STATUS, ROLES as Role, ROLES } from "./constants.js";
 import AppError from "./appError.js";
+
+const isAdmin = (user) => user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN;
 
 export const userStatus = (user) => {
   if (!user) {
@@ -17,7 +19,10 @@ export const userStatus = (user) => {
   }
 
   if (user.isTerminated) {
-    throw new AppError("Your account has been terminated. Please contact support.", 403);
+    throw new AppError(
+      "Your account has been terminated. Please contact support.",
+      403,
+    );
   }
 };
 
@@ -70,16 +75,12 @@ export const applicationStatus = (user, action) => {
 };
 
 export const disciplineAction = (user, action) => {
-  if (action.startsWith("suspend")) {
-    if (user.isSuspended) {
-      throw new AppError("User is already suspended", 400);
-    }
+  if (action.startsWith("suspend") && user.isSuspended) {
+    throw new AppError("User is already suspended", 400);
   }
 
-  if (action.startsWith("terminate")) {
-    if (user.isTerminated) {
-      throw new AppError("User is already terminated", 400);
-    }
+  if (action.startsWith("terminate") && user.isTerminated) {
+    throw new AppError("User is already terminated", 400);
   }
 
   switch (action) {
@@ -100,7 +101,10 @@ export const disciplineAction = (user, action) => {
 
     case "unsuspendUser": {
       if (isAdmin(user)) {
-        throw new AppError("This route is for un suspending only non admin users", 403);
+        throw new AppError(
+          "This route is for un suspending only non admin users",
+          403,
+        );
       }
       break;
     }
@@ -113,7 +117,10 @@ export const disciplineAction = (user, action) => {
 
     case "terminateUser": {
       if (isAdmin(user)) {
-        throw new AppError("This route is for terminating only non admin users", 403);
+        throw new AppError(
+          "This route is for terminating only non admin users",
+          403,
+        );
       }
       break;
     }

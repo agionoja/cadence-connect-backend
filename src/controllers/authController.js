@@ -1,14 +1,14 @@
 import crypto from "node:crypto";
 import AppError from "../utils/appError.js";
-import catchAsync from "../utils/catchAsync.js";
-import filterObject from "../utils/filterObject.js";
-import createSendToken from "../utils/createSendToken.js";
+import { catchAsync, filterResBody, sendResToken } from "../utils/utils.js";
 import User from "../models/userModel.js";
 import sendEmail from "../utils/email.js";
-import { apiBaseUrlV1 } from "../utils/apiBaseUrl.js";
+import { jwtDecode } from "../utils/jwt.js";
+import { findUserById } from "../utils/db.js";
+import { userStatus } from "../utils/userCheckThrowers.js";
 
 export const signUp = catchAsync(async (req, res, next) => {
-  const body = filterObject(
+  const body = filterResBody(
     req.body,
     "name",
     "email",
@@ -16,8 +16,8 @@ export const signUp = catchAsync(async (req, res, next) => {
     "passwordConfirm",
   );
   const user = await User.create(body);
-  user.password = undefined; // password is selected to false on schema, but it does not work on creation
-  await createSendToken(res, user, 200);
+  user.password = undefined;
+  await sendResToken(res, user, 201);
 });
 
 export const signIn = catchAsync(async (req, res, next) => {
@@ -32,8 +32,9 @@ export const signIn = catchAsync(async (req, res, next) => {
     return next(new AppError("Password or email is incorrect", 401));
   }
 
+  userStatus(user);
   user.password = undefined;
-  await createSendToken(res, user, 200);
+  await sendResToken(res, user, 200);
 });
 
 export const forgotPassword = catchAsync(async (req, res, next) => {
@@ -49,6 +50,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("User does not exist", 404));
   }
 
+  userStatus(user);
   const resetToken = await user.generateAndSavePasswordResetToken();
   const resetTokenUrl = `${req.protocol}://${req.get("host")}/api/v1/reset-password/${resetToken}`;
   const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetTokenUrl}`;
@@ -70,16 +72,8 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
     user.passwordResetTokenExpires = undefined;
     user.passwordResetToken = undefined;
     await user.save({ validateBeforeSave: false });
-
     return next(new AppError(err.message, 500));
   }
-  // //TODO: remove this when email service works
-  // res.status(200).json({
-  //   statusText: "success",
-  //   message: "The password reset token has been sent to your email",
-  //   resetTokenUrl,
-  //   resetToken,
-  // });
 });
 
 export const resetPassword = catchAsync(async (req, res, next) => {
@@ -99,7 +93,9 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Token is invalid or is expired", 401));
   }
 
+  userStatus(user);
   const { password, passwordConfirm } = req.body;
+
   if (await user.comparePassword(password, user.password)) {
     return next(
       new AppError("New password cannot be the same as the old password", 401),
@@ -113,12 +109,81 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 
   await user.save();
   user.password = undefined;
-  await createSendToken(res, user, 200);
+  await sendResToken(res, user, 200);
 });
 
-export default {
-  signUp,
-  signIn,
-  forgotPassword,
-  resetPassword,
-};
+export const updateMyPassword = catchAsync(async (req, res, next) => {
+  const { user } = req;
+  const { oldPassword, password, passwordConfirm } = req.body;
+
+  if (!oldPassword || !password || !passwordConfirm) {
+    return next(
+      new AppError(
+        "Please provide all required fields: oldPassword, password, and passwordConfirm",
+        400,
+      ),
+    );
+  }
+
+  if (!(await user.comparePassword(oldPassword, user.password))) {
+    return next(new AppError("Your current password is incorrect", 401));
+  }
+
+  user.password = password;
+  user.passwordConfirm = passwordConfirm;
+  await user.save();
+
+  user.password = undefined;
+  user.passwordConfirm = undefined;
+
+  res.status(200).json({
+    statusText: "success",
+    data: { user },
+  });
+});
+
+export const restrictTo =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      return next(new AppError("User not found"), 404);
+    }
+    if (roles.includes(req.user.role)) return next();
+    return next(
+      new AppError("You are not authorized to access this resource.", 401),
+    );
+  };
+
+export const protect = catchAsync(async (req, res, next) => {
+  let token;
+  const { authorization } = req.headers;
+
+  if (authorization && authorization.startsWith("Bearer ")) {
+    token = authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return next(
+      new AppError("You are not logged in. Please log in to get access.", 401),
+    );
+  }
+
+  const decoded = await jwtDecode(token);
+  const user = await findUserById(
+    decoded.id,
+    {
+      errMsg: "The user belonging to this account no longer exists.",
+    },
+    (query) => query.select("+password +passwordChangedAt"),
+  );
+  userStatus(user);
+
+  if (user.passwordChangedAfterJwt(decoded.iat)) {
+    return next(
+      new AppError("Password recently changed. Please log in again.", 401),
+    );
+  }
+
+  req.user = user;
+  next();
+});

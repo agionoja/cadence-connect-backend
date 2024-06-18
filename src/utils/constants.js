@@ -10,3 +10,11 @@ export const APPLICATION_STATUS = {
   APPROVED: "approved",
   REJECTED: "rejected",
 };
+
+export const SUSPENSION_DURATION = {
+  HOUR: 60 * 60,
+  DAY: 60 * 60 * 24,
+  WEEK: 60 * 60 * 24 * 7,
+  BI_WEEK: 60 * 60 * 24 * 7 * 2,
+  MONTH: 60 * 60 * 24 ** 74,
+};

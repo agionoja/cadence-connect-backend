@@ -1,54 +1,76 @@
 import express from "express";
-import restrictTo from "../middlewares/restrictTo.js";
-import userController from "../controllers/userController.js";
-import authController from "../controllers/authController.js";
-import protect from "../middlewares/protect.js";
-import preventAdminEventPlanner from "../middlewares/preventAdminEventPlanner.js";
-import findAndAttachUserToRequestFromParam from "../middlewares/findAndAttachUserToRequestFromParam.js";
-import validateApplicationStatus from "../middlewares/validateApplicationStatus.js";
+import * as userController from "../controllers/userController.js";
+import * as authController from "../controllers/authController.js";
+import * as cacheMiddleware from "../middlewares/cacheMiddleware.js";
+import { ROLES } from "../utils/constants.js";
 
 const router = express.Router();
+const { SUPER_ADMIN, ADMIN } = ROLES;
 
 router.post("/sign-up", authController.signUp);
 router.post("/sign-in", authController.signIn);
 router.post("/forgot-password", authController.forgotPassword);
 router.patch("/reset-password/:token", authController.resetPassword);
 
+////////////////////////////////////////////////////////////////////////////////
+/*PROTECTED ROUTES*/
+////////////////////////////////////////////////////////////////////////////////
+router.use(authController.protect);
+
+router.patch("/update-password/", authController.updateMyPassword);
+router.patch("/update-me", userController.updateMe);
 router.patch(
   "/:id/event-planner/apply",
-  protect,
-  findAndAttachUserToRequestFromParam("id", "targetUser"),
-  preventAdminEventPlanner,
-  validateApplicationStatus("apply"),
-  userController.applyForEventPlanner,
+  userController.eventPlannerApplication("apply"),
 );
-router.patch(
-  "/:id/event-planner/approve",
-  protect,
-  findAndAttachUserToRequestFromParam("id", "targetUser"),
-  preventAdminEventPlanner,
-  restrictTo("admin", "superAdmin"),
-  validateApplicationStatus("approve"),
-  userController.approveEventPlanner,
-);
-router.patch(
-  "/:id/event-planner/reject",
-  protect,
-  findAndAttachUserToRequestFromParam("id", "targetUser"),
-  preventAdminEventPlanner,
-  restrictTo("admin", "superAdmin"),
-  validateApplicationStatus("reject"),
-  userController.rejectEventPlanner,
-);
+
+////////////////////////////////////////////////////////////////////////////////
+/*RESTRICTED ROUTES*/
+////////////////////////////////////////////////////////////////////////////////
+router.use(authController.restrictTo(SUPER_ADMIN, ADMIN));
 
 router
   .route("/")
   .post(userController.createUser)
-  .get(protect, userController.getAllUsers);
+  .get(cacheMiddleware.cacheControl, userController.getAllUsers)
+  .delete(
+    authController.restrictTo(SUPER_ADMIN),
+    userController.deleteManyUsers,
+  );
+
 router
   .route("/:id")
-  .get(protect, userController.getUser)
-  .patch(protect, userController.updateUser)
-  .delete(protect, userController.deleteUser);
+  .get(cacheMiddleware.cacheControl, userController.getUser)
+  .patch(userController.updateUser)
+  .delete(userController.deleteUser);
+
+router.patch(
+  "/:id/event-planner/approve",
+  userController.eventPlannerApplication("approve"),
+);
+router.patch(
+  "/:id/event-planner/reject",
+  userController.eventPlannerApplication("reject"),
+);
+
+////////////////////////////////////////////////////////////////////////////////
+/*DISCIPLINE USERS*/
+////////////////////////////////////////////////////////////////////////////////
+router.patch("/suspend/:id", userController.disciplineUser("suspendUser"));
+router.patch("/unsuspend/:id", userController.disciplineUser("unsuspendUser"));
+router.patch("/terminate/:id", userController.disciplineUser("terminateUser"));
+
+router.patch(
+  "/admin/suspend/:id",
+  userController.disciplineUser("suspendAdmin"),
+);
+router.patch(
+  "/admin/unsuspend/:id",
+  userController.disciplineUser("unsuspendAdmin"),
+);
+router.patch(
+  "/admin/terminate/:id",
+  userController.disciplineUser("terminateAdmin"),
+);
 
 export default router;

@@ -3,7 +3,14 @@ import { promisify } from "node:util";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import pointSchema from "./pointSchema.js";
-import { APPLICATION_STATUS, ROLES } from "../utils/constants.js";
+import {
+  APPLICATION_STATUS,
+  ROLES,
+  SUSPENSION_DURATION,
+} from "../utils/constants.js";
+
+const { ADMIN, SUPER_ADMIN, REGULAR_USER, EVENT_PLANNER } = ROLES;
+const { HOUR, DAY, BI_WEEK, WEEK, MONTH } = SUSPENSION_DURATION;
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,18 +34,15 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: [
-          ROLES.REGULAR_USER,
-          ROLES.EVENT_PLANNER,
-          ROLES.ADMIN,
-          ROLES.SUPER_ADMIN,
-        ],
-        message:
-          "Invalid role. Choose one from: user, eventPlanner, admin or superAdmin",
+        values: [REGULAR_USER, EVENT_PLANNER, ADMIN, SUPER_ADMIN],
+        message: `Invalid role. Choose one from: ${REGULAR_USER}, ${EVENT_PLANNER}, ${ADMIN}, ${SUPER_ADMIN}`,
       },
       default: "user",
     },
-    location: pointSchema,
+    location: {
+      type: pointSchema,
+      index: "2dsphere",
+    },
     profileImage: String,
     password: {
       type: String,
@@ -76,15 +80,6 @@ const userSchema = new mongoose.Schema(
       },
       select: false,
     },
-    isSuspended: {
-      type: Boolean,
-      default: false,
-    },
-    isTerminated: {
-      type: Boolean,
-      default: false,
-    },
-    applyForEventPlanner: Boolean,
     eventPlannerApplicationStatus: {
       type: String,
       enum: {
@@ -93,17 +88,31 @@ const userSchema = new mongoose.Schema(
           APPLICATION_STATUS.PENDING,
           APPLICATION_STATUS.REJECTED,
         ],
-        message: `invalid input({VALUE}). Choose from : pending, approved, rejected`,
+        message: `invalid input({VALUE}). Choose from : ${APPLICATION_STATUS.PENDING}, ${APPLICATION_STATUS.APPROVED} ,${APPLICATION_STATUS.REJECTED}`,
       },
     },
     passwordChangedAt: {
       type: Date,
       select: false,
     },
+    passwordResetTimer: {
+      type: Date,
+      select: false,
+    },
+    suspensionDuration: {
+      type: Date,
+      enum: {
+        values: [HOUR, DAY, WEEK, BI_WEEK, MONTH],
+        //tODO: PROVIDE A BETTER ERROR MESSAGE
+      },
+    },
+    isSuspended: Boolean,
+    isTerminated: Boolean,
+    applyForEventPlanner: Boolean,
     passwordResetToken: String,
     passwordResetTokenExpires: Date,
-    passwordResetTimer: Date,
-    suspensionDuration: Date,
+    suspensions: [Date],
+    timezone: String,
   },
   { timestamps: true },
 );
@@ -112,14 +121,18 @@ userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
     this.passwordConfirm = undefined;
+
+    if (!this.isNew) {
+      this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
+      this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
+    }
   }
   next();
 });
 
-userSchema.pre("save", async function (next) {
-  if (this.isModified("password") && !this.isNew) {
-    this.passwordChangedAt = Date.now() - 3000; // Handle save disparity (adjusting timestamp for consistency)
-    this.passwordResetTimer = Date.now() + 1000 * 60 * 60 * 60 * 24; // TODO: implement password timer feature
+userSchema.pre(/^find/, function (next) {
+  if (!this.getQuery().includeTerminated) {
+    this.find({ isTerminated: { $ne: true } });
   }
   next();
 });
@@ -137,6 +150,26 @@ userSchema.methods.passwordChangedAfterJwt = function (iat) {
     return passwordChangedAtIat > iat;
   }
   return false;
+};
+
+userSchema.methods.suspendUser = async function (
+  duration = 60 * 60 * 60 * 24 * 14,
+) {
+  this.isSuspended = true;
+  this.suspensionDuration = Date.now() + duration * 1000;
+  this.suspensions = [...this.suspensions, Date.now()]; //TODO: suspensions is not appended
+  await this.save({ validateBeforeSave: false });
+};
+
+userSchema.methods.unsuspendUser = async function () {
+  this.isSuspended = undefined;
+  this.suspensionDuration = undefined;
+  await this.save({ validateBeforeSave: false });
+};
+
+userSchema.methods.terminateUser = async function () {
+  this.isTerminated = true;
+  await this.save({ validateBeforeSave: false });
 };
 
 userSchema.methods.generateAndSavePasswordResetToken = async function () {
